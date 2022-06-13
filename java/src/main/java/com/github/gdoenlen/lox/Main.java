@@ -7,9 +7,12 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 
 @SuppressWarnings("java:S106") // s.out usage
 public class Main {
+    private static boolean hasError = false;
+
     private Main() {}
 
     public static void main(String[] args) {
@@ -34,18 +37,23 @@ public class Main {
         }
 
         run(content);
+        if (hasError) {
+            System.exit(65);
+        }
     }
 
     private static void run(String program) {
-        // todo
+        var lexer = new Lexer(program);
+        lexer.scan().forEach(System.out::println);
     }
 
-    private static void error(int line, String message) {
+    public static void error(int line, String message) {
         report(line, "", message);
     }
 
     private static void report(int line, String where, String message) {
         System.err.println("[line " + line + "] Error " + where + ": " + message);
+        hasError = true;
     }
 
     private static void runPrompt() {
