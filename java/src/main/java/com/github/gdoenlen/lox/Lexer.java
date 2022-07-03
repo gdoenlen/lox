@@ -55,6 +55,10 @@ class Lexer {
             value = this.string();
         }
 
+        if (type == NUMBER) {
+            value = this.number();
+        }
+
         this.addToken(type, value);
     }
 
@@ -98,10 +102,11 @@ class Lexer {
                 } else {
                     yield SLASH;
                 }
-            };
+            }
             case ' ', '\r', '\t' -> WHITE_SPACE;
             case '\n' -> EOL;
             case '"' -> STRING;
+            case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> NUMBER;
             default -> throw new IllegalArgumentException("TODO");
         };
     }
@@ -140,5 +145,33 @@ class Lexer {
         this.advance();
 
         return this.source.substring(start + 1, current - 1);
+    }
+
+    private Double number() {
+        while (isDigit(this.peek())) {
+            this.advance();
+        }
+
+        if (this.peek() == '.' && isDigit(this.peekNext())) {
+            this.advance();
+        }
+
+        while (isDigit(this.peek())) {
+            this.advance();
+        }
+
+        return Double.valueOf(this.source.substring(start, current));
+    }
+
+    private char peekNext() {
+        if (this.current + 1 >= this.source.length()) {
+            return '\0';
+        }
+
+        return this.source.charAt(current + 1);
+    }
+
+    private static boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
     }
 }
