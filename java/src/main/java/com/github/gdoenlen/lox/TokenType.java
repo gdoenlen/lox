@@ -1,5 +1,8 @@
 package com.github.gdoenlen.lox;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 enum TokenType {
     LEFT_PAREN,
     RIGHT_PAREN,
@@ -48,4 +51,26 @@ enum TokenType {
     EOL,
     EOF;
 
+    private static final Set<TokenType> RESERVED = EnumSet.of(
+        AND,
+        CLASS,
+        ELSE,
+        FALSE,
+        FOR,
+        FUN,
+        IF,
+        NIL,
+        OR,
+        PRINT,
+        RETURN,
+        SUPER,
+        THIS,
+        TRUE,
+        VAR,
+        WHILE
+    );
+
+    public static boolean isReserved(TokenType t) {
+        return RESERVED.contains(t);
+    }
 }

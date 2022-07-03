@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import static com.github.gdoenlen.lox.TokenType.*;
+import static java.lang.Character.isAlphabetic;
+import static java.lang.Character.isDigit;
 
 class Lexer {
     private final String source;
@@ -59,6 +61,21 @@ class Lexer {
             value = this.number();
         }
 
+        if (type == IDENTIFIER) {
+            value = this.identifier();
+
+            TokenType t;
+            try {
+                t = TokenType.valueOf(value.toString());
+            } catch (IllegalArgumentException ex) {
+                t = IDENTIFIER;
+            }
+
+            if (TokenType.isReserved(t)) {
+                type = t;
+            }
+        }
+
         this.addToken(type, value);
     }
 
@@ -107,7 +124,13 @@ class Lexer {
             case '\n' -> EOL;
             case '"' -> STRING;
             case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> NUMBER;
-            default -> throw new IllegalArgumentException("TODO");
+            default -> {
+                if (isAlphabetic(c)) {
+                    yield IDENTIFIER;
+                }
+
+                throw new IllegalArgumentException("TODO");
+            }
         };
     }
 
@@ -171,7 +194,15 @@ class Lexer {
         return this.source.charAt(current + 1);
     }
 
-    private static boolean isDigit(char c) {
-        return c >= '0' && c <= '9';
+    private String identifier() {
+        while (isAlphaNumeric(this.peek())) {
+            this.advance();
+        }
+
+        return this.source.substring(start, current);
+    }
+
+    private static boolean isAlphaNumeric(char c) {
+        return isDigit(c) || isAlphabetic(c);
     }
 }
