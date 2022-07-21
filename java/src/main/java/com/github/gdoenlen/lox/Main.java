@@ -44,7 +44,13 @@ public class Main {
 
     private static void run(String program) {
         var lexer = new Lexer(program);
-        lexer.scan().forEach(System.out::println);
+        var parser = new Parser(lexer.scan());
+
+        Expr expr = parser.parse();
+
+        if (hasError) {
+            return;
+        }
     }
 
     public static void error(int line, String message) {

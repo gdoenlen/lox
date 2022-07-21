@@ -2,6 +2,7 @@ package com.github.gdoenlen.lox;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static com.github.gdoenlen.lox.TokenType.*;
 import static java.lang.Character.isAlphabetic;
@@ -9,7 +10,7 @@ import static java.lang.Character.isDigit;
 
 class Lexer {
     private final String source;
-    private final Collection<Token> tokens = new ArrayList<>();
+    private final List<Token> tokens = new ArrayList<>();
     private int start = 0;
     private int current = 0;
     private int line = 1;
@@ -18,7 +19,7 @@ class Lexer {
         this.source = source;
     }
 
-    Collection<Token> scan() {
+    List<Token> scan() {
         while (this.hasNext()) {
             this.start = current;
             this.scanToken();
