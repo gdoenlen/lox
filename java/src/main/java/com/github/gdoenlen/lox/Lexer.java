@@ -1,7 +1,6 @@
 package com.github.gdoenlen.lox;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static com.github.gdoenlen.lox.TokenType.*;
@@ -51,6 +50,8 @@ class Lexer {
 
         if (type == EOL) {
             this.line++;
+
+            return;
         }
 
         Object value = null;
@@ -67,7 +68,7 @@ class Lexer {
 
             TokenType t;
             try {
-                t = TokenType.valueOf(value.toString());
+                t = TokenType.valueOf(value.toString().toUpperCase()); // todo this shouldn't be case insensitive
             } catch (IllegalArgumentException ex) {
                 t = IDENTIFIER;
             }

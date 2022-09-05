@@ -1,4 +1,4 @@
 package com.github.gdoenlen.lox;
 
-sealed interface Expr permits Binary, Grouping, Literal, Unary {
+sealed interface Expr permits Assign, Binary, Grouping, Literal, NullExpr, Unary, Variable {
 }

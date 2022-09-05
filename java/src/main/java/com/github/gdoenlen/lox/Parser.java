@@ -1,11 +1,25 @@
 package com.github.gdoenlen.lox;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
 import static com.github.gdoenlen.lox.TokenType.*;
 
+/**
+ * Lox's grammar is defined as:
+ *
+ * program -> declaration* EOF ;
+ * declaration -> varDecl | statement;
+ * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
+ * statement -> exprStmt | printStmt ;
+ * printStmt -> "print" expression ";" ;
+ * exprStmt -> expression ";" ;              todo: go back and define expression
+ * expression -> assignment ;
+ * assignment -> IDENTIFIER "=" assignment | equality ;
+ */
 class Parser {
     private final List<Token> tokens;
     private int current = 0;
@@ -15,7 +29,26 @@ class Parser {
     }
 
     private Expr expression() {
-        return this.equality();
+        return this.assignment();
+    }
+
+    private Expr assignment() {
+        Expr expr = this.equality();
+
+        if (this.match(EQUAL)) {
+            Token equals = this.previous();
+            Expr value = this.assignment();
+
+            if (expr instanceof Variable v) {
+                Token t = v.token();
+
+                return new Assign(t, value);
+            }
+
+            throw error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     private Expr equality() {
@@ -84,6 +117,10 @@ class Parser {
             this.consume(RIGHT_PAREN, "Expect right parens");
 
             return new Grouping(expr);
+        }
+
+        if (this.match(IDENTIFIER)) {
+            return new Variable(this.previous());
         }
 
         throw new RuntimeException("todo");
@@ -163,11 +200,59 @@ class Parser {
     private static final Set<TokenType> KEYWORD_SYNCRHONIZERS
         = EnumSet.of(CLASS, FUN, VAR, FOR, IF, WHILE, PRINT, RETURN);
 
-    Expr parse() {
-        try {
-            return this.expression();
-        } catch (ParseException ex) {
-            return null;
+    Collection<Statement> parse() {
+        var statements = new ArrayList<Statement>();
+        while (this.hasNext()) {
+            try {
+                statements.add(this.declaration());
+            } catch (ParseException ex) {
+                this.synchronize();
+            }
         }
+
+        return statements;
+    }
+
+    private Statement declaration() {
+        if (this.match(VAR)) {
+            return this.variableDeclaration();
+        }
+
+        return this.statement();
+    }
+
+    private Statement variableDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect variable name.");
+
+        Expr initializer = NullExpr.instance();
+        if (this.match(EQUAL)) {
+            initializer = this.expression();
+        }
+
+        consume(SEMI_COLON, "Expect ';' after variable declaration.");
+
+        return new Var(name, initializer);
+    }
+
+    private Statement statement() {
+        if (this.match(PRINT)) {
+            return this.printStatement();
+        }
+
+        return this.expressionStatement();
+    }
+
+    private Statement printStatement() {
+        Expr value = expression();
+        this.consume(SEMI_COLON, "Expect ';' after value.");
+
+        return new Print(value);
+    }
+
+    private Statement expressionStatement() {
+        Expr expr = this.expression();
+        consume(SEMI_COLON, "Expect ';' after expression.");
+
+        return new Expression(expr);
     }
 }

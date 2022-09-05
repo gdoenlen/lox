@@ -23,7 +23,7 @@
         <version>3.8.1</version>
         <configuration>
           <compilerArgs>
-            <arg>-Werror</arg>
+<!--            <arg>-Werror</arg>-->
             <arg>-Xlint:all</arg>
             <arg>--enable-preview</arg>
           </compilerArgs>

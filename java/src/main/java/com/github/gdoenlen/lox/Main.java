@@ -45,11 +45,16 @@ public class Main {
     private static void run(String program) {
         var lexer = new Lexer(program);
         var parser = new Parser(lexer.scan());
+        var interpreter = new Interpreter();
 
-        Expr expr = parser.parse();
+        Collection<Statement> statements = parser.parse();
 
         if (hasError) {
             return;
+        }
+
+        for (Statement statement : statements) {
+            interpreter.interpret(statement);
         }
     }
 

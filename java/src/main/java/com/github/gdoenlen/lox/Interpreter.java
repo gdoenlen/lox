@@ -3,12 +3,23 @@ package com.github.gdoenlen.lox;
 import java.util.Objects;
 
 class Interpreter {
+    private final Environment environment = new Environment();
+
+    @SuppressWarnings("unused")
     Object interpret(Expr expr) {
         return switch (expr) {
-            case Literal l -> l.value();
-            case Grouping g -> this.interpret(g.expr());
-            case Unary u -> this.unary(u);
+            case Assign assign -> {
+                Object value = this.interpret(assign.value());
+                this.environment.assign(assign.token(), value);
+
+                yield value;
+            }
             case Binary b -> this.binary(b);
+            case Grouping g -> this.interpret(g.expr());
+            case Literal l -> l.value();
+            case NullExpr nullExpr -> null;
+            case Unary u -> this.unary(u);
+            case Variable variable -> this.environment.get(variable.token());
         };
     }
 
@@ -72,5 +83,21 @@ class Interpreter {
                 right.getClass()
             )
         );
+    }
+
+    @SuppressWarnings({ "java:S1301", "java:S106", "java:S131" })
+    void interpret(Statement statement) {
+        switch (statement) {
+            case Expression e -> this.interpret(e.expr());
+            case Print p -> System.out.println(this.interpret(p.value()).toString());
+            case Var v -> {
+                Object value = null;
+                if (v.initializer() != null) {
+                    value = this.interpret(v.initializer());
+                }
+
+                this.environment.define(v.token().lexeme(), value);
+            }
+        }
     }
 }
