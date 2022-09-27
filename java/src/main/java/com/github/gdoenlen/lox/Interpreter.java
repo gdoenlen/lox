@@ -6,7 +6,7 @@ class Interpreter {
     private final Environment environment = new Environment();
 
     @SuppressWarnings("unused")
-    Object interpret(Expr expr) {
+    private Object interpret(Expr expr) {
         return switch (expr) {
             case Assign assign -> {
                 Object value = this.interpret(assign.value());
@@ -89,7 +89,7 @@ class Interpreter {
     void interpret(Statement statement) {
         switch (statement) {
             case Expression e -> this.interpret(e.expr());
-            case Print p -> System.out.println(this.interpret(p.value()).toString());
+            case Print p -> System.out.println(Objects.toString(this.interpret(p.value()), "nil"));
             case Var v -> {
                 Object value = null;
                 if (v.initializer() != null) {
