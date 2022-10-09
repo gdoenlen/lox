@@ -15,7 +15,7 @@ class Environment {
             this.values.put(token.lexeme(), value);
         }
 
-        throw newUndefinedVariableException(token);
+        throw new UndefinedVariableException(token);
     }
 
     Object get(Token token) {
@@ -24,10 +24,6 @@ class Environment {
             return value;
         }
 
-        throw newUndefinedVariableException(token);
-    }
-
-    private static UndefinedVariableException newUndefinedVariableException(Token token) {
-       return new UndefinedVariableException(token, "Undefined variable '" + token.lexeme() + "'.");
+        throw new UndefinedVariableException(token);
     }
 }
