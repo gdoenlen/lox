@@ -1,3 +1,7 @@
 print 1 == 2;
 print "one";
 print 1 + 2;
+var a = 2;
+print a + 2;
+var b;
+print b;

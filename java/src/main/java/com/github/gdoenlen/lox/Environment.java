@@ -19,9 +19,8 @@ class Environment {
     }
 
     Object get(Token token) {
-        Object value = this.values.get(token.lexeme());
-        if (value != null) {
-            return value;
+        if (this.values.containsKey(token.lexeme())) {
+            return this.values.get(token.lexeme());
         }
 
         throw new UndefinedVariableException(token);
