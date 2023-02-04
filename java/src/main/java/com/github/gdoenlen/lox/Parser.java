@@ -14,8 +14,9 @@ import static com.github.gdoenlen.lox.TokenType.*;
  * program -> declaration* EOF ;
  * declaration -> varDecl | statement;
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
- * statement -> exprStmt | printStmt ;
+ * statement -> exprStmt | printStmt | block ;
  * printStmt -> "print" expression ";" ;
+ * block -> "{" declaration* "}" ;
  * exprStmt -> expression ";" ;              todo: go back and define expression
  * expression -> assignment ;
  * assignment -> IDENTIFIER "=" assignment | equality ;
@@ -239,6 +240,10 @@ class Parser {
             return this.printStatement();
         }
 
+        if (this.match(LEFT_BRACE)) {
+            return this.block();
+        }
+
         return this.expressionStatement();
     }
 
@@ -247,6 +252,18 @@ class Parser {
         this.consume(SEMI_COLON, "Expect ';' after value.");
 
         return new Print(value);
+    }
+
+    private Statement block() {
+        var statements = new ArrayList<Statement>();
+
+        while (!this.check(RIGHT_BRACE) && this.hasNext()) {
+            statements.add(this.declaration());
+        }
+
+        this.consume(RIGHT_BRACE, "Expect '}' after block.");
+
+        return new Block(statements);
     }
 
     private Statement expressionStatement() {

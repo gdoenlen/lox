@@ -3,7 +3,7 @@ package com.github.gdoenlen.lox;
 import java.util.Objects;
 
 class Interpreter {
-    private final Environment environment = new Environment();
+    private Environment environment = new Environment();
 
     @SuppressWarnings("unused")
     private Object interpret(Expr expr) {
@@ -97,6 +97,15 @@ class Interpreter {
                 }
 
                 this.environment.define(v.token().lexeme(), value);
+            }
+            case Block b -> {
+                var previousEnv = this.environment;
+                try {
+                    this.environment = new Environment(previousEnv);
+                    b.statements().forEach(this::interpret);
+                } finally {
+                    this.environment = previousEnv;
+                }
             }
         }
     }

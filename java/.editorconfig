@@ -4,3 +4,6 @@ indent_size = 4
 [*.xml]
 indent_size = 2
 
+[*.lox]
+indent_size = 2
+
