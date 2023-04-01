@@ -1,4 +1,4 @@
 package com.github.gdoenlen.lox;
 
-sealed interface Statement permits Expression, Print, Var, Block {
+sealed interface Statement permits Expression, Print, Var, Block, Conditional, NullStatement {
 }

@@ -35,7 +35,7 @@ class Interpreter {
         };
     }
 
-    private static Boolean isTruthy(Object o) {
+    private static boolean isTruthy(Object o) {
         if (o instanceof Boolean b) {
             return b;
         }
@@ -85,7 +85,15 @@ class Interpreter {
         );
     }
 
-    @SuppressWarnings({ "java:S1301", "java:S106", "java:S131" })
+    @SuppressWarnings({
+        // s.out
+        "java:S106",
+        // switch default, false positive
+        "java:S131",
+        // empty case block
+        "java:S108",
+        "unused"
+    })
     void interpret(Statement statement) {
         switch (statement) {
             case Expression e -> this.interpret(e.expr());
@@ -107,6 +115,14 @@ class Interpreter {
                     this.environment = previousEnv;
                 }
             }
+            case Conditional c -> {
+                if (isTruthy(this.interpret(c.condition()))) {
+                    this.interpret(c.thenBranch());
+                } else {
+                    this.interpret(c.elseBranch());
+                }
+            }
+            case NullStatement ns -> {}
         }
     }
 }

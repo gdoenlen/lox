@@ -14,10 +14,11 @@ import static com.github.gdoenlen.lox.TokenType.*;
  * program -> declaration* EOF ;
  * declaration -> varDecl | statement;
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
- * statement -> exprStmt | printStmt | block ;
+ * statement -> exprStmt | ifStmt | printStmt | block ;
+ * exprStmt -> expression ";" ;              todo: go back and define expression
+ * ifStmt -> "if" "(" expression ")" statement ( "else" statement )? ;
  * printStmt -> "print" expression ";" ;
  * block -> "{" declaration* "}" ;
- * exprStmt -> expression ";" ;              todo: go back and define expression
  * expression -> assignment ;
  * assignment -> IDENTIFIER "=" assignment | equality ;
  */
@@ -236,6 +237,9 @@ class Parser {
     }
 
     private Statement statement() {
+        if (this.match(IF)) {
+            return this.conditional();
+        }
         if (this.match(PRINT)) {
             return this.printStatement();
         }
@@ -247,8 +251,22 @@ class Parser {
         return this.expressionStatement();
     }
 
+    private Statement conditional() {
+        this.consume(LEFT_PAREN, "Expect '(' after 'if'.");
+        Expr expr = this.expression();
+        consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+        Statement thenBranch = this.statement();
+        Statement elseBranch = NullStatement.instance();
+        if (this.match(ELSE)) {
+            elseBranch = this.statement();
+        }
+
+        return new Conditional(expr, thenBranch, elseBranch);
+    }
+
     private Statement printStatement() {
-        Expr value = expression();
+        Expr value = this.expression();
         this.consume(SEMI_COLON, "Expect ';' after value.");
 
         return new Print(value);
