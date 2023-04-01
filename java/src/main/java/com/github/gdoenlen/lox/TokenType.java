@@ -70,7 +70,7 @@ enum TokenType {
         WHILE
     );
 
-    public static boolean isReserved(TokenType t) {
-        return RESERVED.contains(t);
+    public boolean isReserved() {
+        return RESERVED.contains(this);
     }
 }

@@ -73,7 +73,7 @@ class Lexer {
                 t = IDENTIFIER;
             }
 
-            if (TokenType.isReserved(t)) {
+            if (t.isReserved()) {
                 type = t;
             }
         }
