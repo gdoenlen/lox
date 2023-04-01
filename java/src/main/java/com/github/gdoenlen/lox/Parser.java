@@ -20,7 +20,9 @@ import static com.github.gdoenlen.lox.TokenType.*;
  * printStmt -> "print" expression ";" ;
  * block -> "{" declaration* "}" ;
  * expression -> assignment ;
- * assignment -> IDENTIFIER "=" assignment | equality ;
+ * assignment -> IDENTIFIER "=" assignment | logical_or ;
+ * logic_or -> logic_And ( "or" logic_and )* ;
+ * logic_and -> equality ( "and" equality )* ;
  */
 class Parser {
     private final List<Token> tokens;
@@ -35,7 +37,7 @@ class Parser {
     }
 
     private Expr assignment() {
-        Expr expr = this.equality();
+        Expr expr = this.or();
 
         if (this.match(EQUAL)) {
             Token equals = this.previous();
@@ -48,6 +50,28 @@ class Parser {
             }
 
             throw error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
+    }
+
+    private Expr or() {
+        Expr expr = this.and();
+        while(this.match(OR)) {
+            Token operator = this.previous();
+            Expr right = this.and();
+            expr = new Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr and() {
+        Expr expr = this.equality();
+        while (this.match(AND)) {
+            Token operator = this.previous();
+            Expr right = this.equality();
+            expr = new Logical(expr, operator, right);
         }
 
         return expr;
@@ -108,6 +132,10 @@ class Parser {
 
         if (this.match(TRUE)) {
             return new Literal(Boolean.TRUE);
+        }
+
+        if (this.match(NIL)) {
+            return NullExpr.instance();
         }
 
         if (this.match(NUMBER, STRING)) {

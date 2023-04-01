@@ -17,6 +17,18 @@ class Interpreter {
             case Binary b -> this.binary(b);
             case Grouping g -> this.interpret(g.expr());
             case Literal l -> l.value();
+            case Logical l -> {
+                Object left = this.interpret(l.left());
+                if (l.isOr() && isTruthy(left)) {
+                    yield left;
+                }
+
+                if (l.isAnd() && !isTruthy(left)) {
+                    yield left;
+                }
+
+                yield this.interpret(l.right());
+            }
             case NullExpr nullExpr -> null;
             case Unary u -> this.unary(u);
             case Variable variable -> this.environment.get(variable.token());

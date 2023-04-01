@@ -31,3 +31,6 @@ print b;
 if (true) {
   print "conditional works";
 }
+
+print ("hi" or 2);
+print (nil or "yes");
