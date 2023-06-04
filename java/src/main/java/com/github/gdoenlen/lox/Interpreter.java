@@ -134,6 +134,11 @@ class Interpreter {
                     this.interpret(c.elseBranch());
                 }
             }
+            case While w -> {
+                while (isTruthy(this.interpret(w.condition()))) {
+                    this.interpret(w.body());
+                }
+            }
             case NullStatement ns -> {}
         }
     }

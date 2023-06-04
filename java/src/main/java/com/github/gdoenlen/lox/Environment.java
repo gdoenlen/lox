@@ -26,6 +26,8 @@ class Environment {
     void assign(Token token, Object value) {
         if (this.values.containsKey(token.lexeme())) {
             this.values.put(token.lexeme(), value);
+
+            return;
         }
 
         if (this.enclosing != null) {

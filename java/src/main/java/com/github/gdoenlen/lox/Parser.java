@@ -12,16 +12,23 @@ import static com.github.gdoenlen.lox.TokenType.*;
  * Lox's grammar is defined as:
  *
  * program -> declaration* EOF ;
- * declaration -> varDecl | statement;
+ * declaration -> varDecl
+ *   | statement;
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
- * statement -> exprStmt | ifStmt | printStmt | whileStmt | block ;
+ * statement -> exprStmt
+ *   | ifStmt
+ *   | printStmt
+ *   | whileStmt
+ *   | block ;
+ * whileStmt -> "while" "(" expression ")" statement ;
  * exprStmt -> expression ";" ;              todo: go back and define expression
  * ifStmt -> "if" "(" expression ")" statement ( "else" statement )? ;
  * printStmt -> "print" expression ";" ;
  * block -> "{" declaration* "}" ;
  * expression -> assignment ;
- * assignment -> IDENTIFIER "=" assignment | logical_or ;
- * logic_or -> logic_And ( "or" logic_and )* ;
+ * assignment -> IDENTIFIER "=" assignment
+ *   | logical_or ;
+ * logic_or -> logic_and ( "or" logic_and )* ;
  * logic_and -> equality ( "and" equality )* ;
  */
 class Parser {
@@ -265,16 +272,14 @@ class Parser {
     }
 
     private Statement statement() {
-        if (this.match(IF)) {
+        if (this.match(IF))
             return this.conditional();
-        }
-        if (this.match(PRINT)) {
+        if (this.match(PRINT))
             return this.printStatement();
-        }
-
-        if (this.match(LEFT_BRACE)) {
+        if (this.match(WHILE))
+            return this.whileStatement();
+        if (this.match(LEFT_BRACE))
             return this.block();
-        }
 
         return this.expressionStatement();
     }
@@ -298,6 +303,15 @@ class Parser {
         this.consume(SEMI_COLON, "Expect ';' after value.");
 
         return new Print(value);
+    }
+
+    private Statement whileStatement() {
+        this.consume(LEFT_PAREN, "Expect '(' after 'while'.");
+        Expr condition = this.expression();
+        this.consume(RIGHT_PAREN, "Expect ')' after condition.");
+        Statement body = this.statement();
+
+        return new While(condition, body);
     }
 
     private Statement block() {
