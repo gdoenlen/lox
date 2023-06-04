@@ -14,7 +14,7 @@ import static com.github.gdoenlen.lox.TokenType.*;
  * program -> declaration* EOF ;
  * declaration -> varDecl | statement;
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
- * statement -> exprStmt | ifStmt | printStmt | block ;
+ * statement -> exprStmt | ifStmt | printStmt | whileStmt | block ;
  * exprStmt -> expression ";" ;              todo: go back and define expression
  * ifStmt -> "if" "(" expression ")" statement ( "else" statement )? ;
  * printStmt -> "print" expression ";" ;

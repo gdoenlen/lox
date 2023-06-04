@@ -37,7 +37,7 @@ class Interpreter {
 
     // TODO can we find a way to exhaust the switches on type?
     private Object unary(Unary u) {
-        TokenType type = u.operator().tokenType();
+        TokenType type = u.tokenType();
         Object right = this.interpret(u.right());
 
         return switch (type) {
@@ -56,7 +56,7 @@ class Interpreter {
     }
 
     private Object binary(Binary b) {
-        TokenType type = b.operator().tokenType();
+        TokenType type = b.tokenType();
         Object left = this.interpret(b.left());
         Object right = this.interpret(b.right());
 
