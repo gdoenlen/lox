@@ -16,14 +16,18 @@ import static com.github.gdoenlen.lox.TokenType.*;
  *   | statement;
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
  * statement -> exprStmt
+ *   | forStmt
  *   | ifStmt
  *   | printStmt
  *   | whileStmt
  *   | block ;
- * whileStmt -> "while" "(" expression ")" statement ;
- * exprStmt -> expression ";" ;              todo: go back and define expression
+ * exprStmt -> expression ";" ;
+ * forStmt -> "for" "(" ( varDecl | exprStmt | ";" )
+ *   expression? ";"
+ *   expression? ")" statement ;
  * ifStmt -> "if" "(" expression ")" statement ( "else" statement )? ;
  * printStmt -> "print" expression ";" ;
+ * whileStmt -> "while" "(" expression ")" statement ;
  * block -> "{" declaration* "}" ;
  * expression -> assignment ;
  * assignment -> IDENTIFIER "=" assignment
@@ -272,6 +276,8 @@ class Parser {
     }
 
     private Statement statement() {
+        if (this.match(FOR))
+            return this.forStatement();
         if (this.match(IF))
             return this.conditional();
         if (this.match(PRINT))
@@ -282,6 +288,43 @@ class Parser {
             return this.block();
 
         return this.expressionStatement();
+    }
+
+    private Statement forStatement() {
+        this.consume(LEFT_PAREN, "Expect '(' after 'for'.");
+
+        Statement initializer;
+        if (this.match(SEMI_COLON)) {
+            initializer = NullStatement.instance();
+        } else if (this.match(VAR)) {
+            initializer = this.variableDeclaration();
+        } else {
+            initializer = this.expressionStatement();
+        }
+
+        Expr condition = null;
+        if (!this.check(SEMI_COLON)) {
+            condition = this.expression();
+        }
+
+        this.consume(SEMI_COLON, "Expect ';' after loop condition.");
+        Expr increment = NullExpr.instance();
+        if (!this.check(RIGHT_PAREN)) {
+            increment = this.expression();
+        }
+
+        this.consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+        Statement body = this.statement();
+
+        if (increment != null) {
+            body = new Block(List.of(body, new Expression(increment)));
+        }
+
+        if (condition == null) {
+            condition = new Literal(Boolean.TRUE);
+        }
+
+        return new Block(List.of(initializer, new While(condition, body)));
     }
 
     private Statement conditional() {

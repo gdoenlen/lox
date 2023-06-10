@@ -110,14 +110,7 @@ class Interpreter {
         switch (statement) {
             case Expression e -> this.interpret(e.expr());
             case Print p -> System.out.println(Objects.toString(this.interpret(p.value()), "nil"));
-            case Var v -> {
-                Object value = null;
-                if (v.initializer() != null) {
-                    value = this.interpret(v.initializer());
-                }
-
-                this.environment.define(v.token().lexeme(), value);
-            }
+            case Var v -> this.environment.define(v.token().lexeme(), this.interpret(v.initializer()));
             case Block b -> {
                 var previousEnv = this.environment;
                 try {
