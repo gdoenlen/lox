@@ -1,9 +1,18 @@
 package com.github.gdoenlen.lox;
 
+import java.util.Map;
 import java.util.Objects;
 
+import com.github.gdoenlen.lox.util.CollectionUtils;
+
 class Interpreter {
+    private static final Environment GLOBALS = new Environment();
+    static {
+        // todo how do we do native funcs without classes?
+        GLOBALS.define("clock", new ClockCallable());
+    }
     private Environment environment = new Environment();
+
 
     @SuppressWarnings("unused")
     private Object interpret(Expr expr) {
@@ -15,6 +24,35 @@ class Interpreter {
                 yield value;
             }
             case Binary b -> this.binary(b);
+            case Call c -> {
+                Object callee = this.interpret(c.callee());
+                if (!(callee instanceof StaticFunc fn)) {
+                    throw new IllegalCallException(c.callSite());
+                }
+
+                if (fn.arity() != c.arguments().size()) {
+                    throw new ArgumentArityException(c.callSite(), fn.arity(), c.arguments().size());
+                }
+
+                // todo this should probably be an autocloseable of some sort
+                var previousEnv = this.environment;
+                this.environment = new Environment(environment);
+                try {
+                    var arguments = c.arguments()
+                        .stream()
+                        .map(this::interpret)
+                        .toList();
+                    CollectionUtils.zip(fn.parameters(), arguments, Map::entry)
+                        .forEach(entry -> environment.define(entry.getKey().lexeme(), entry.getValue()));
+
+                    this.interpret(fn.body());
+
+                    // todo we need return values
+                    yield null;
+                } finally {
+                    this.environment = previousEnv;
+                }
+            }
             case Grouping g -> this.interpret(g.expr());
             case Literal l -> l.value();
             case Logical l -> {
@@ -80,6 +118,7 @@ class Interpreter {
             return l + right;
         }
 
+        // todo this is a bug, objects should always be added l + r, not r + l
         if (right instanceof String r) {
             return r + left;
         }
@@ -112,6 +151,7 @@ class Interpreter {
             case Print p -> System.out.println(Objects.toString(this.interpret(p.value()), "nil"));
             case Var v -> this.environment.define(v.token().lexeme(), this.interpret(v.initializer()));
             case Block b -> {
+                // todo make an autocloseable for environ
                 var previousEnv = this.environment;
                 try {
                     this.environment = new Environment(previousEnv);
@@ -127,9 +167,10 @@ class Interpreter {
                     this.interpret(c.elseBranch());
                 }
             }
-            case While w -> {
-                while (isTruthy(this.interpret(w.condition()))) {
-                    this.interpret(w.body());
+            case StaticFunc sf -> this.environment.define(sf.name().lexeme(), sf);
+            case While(var condition, var body) -> {
+                while (isTruthy(this.interpret(condition))) {
+                    this.interpret(body);
                 }
             }
             case NullStatement ns -> {}

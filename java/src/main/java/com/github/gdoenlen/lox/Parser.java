@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import static com.github.gdoenlen.lox.TokenType.*;
 
@@ -12,8 +13,12 @@ import static com.github.gdoenlen.lox.TokenType.*;
  * Lox's grammar is defined as:
  *
  * program -> declaration* EOF ;
- * declaration -> varDecl
+ * declaration -> funDecl
+ *   | varDecl
  *   | statement;
+ * funDecl -> "fun" function ;
+ * function -> IDENTIFIER "(" parameters? ")" block ;
+ * parameters -> IDENTIFIER ( "," IDENTIFIER )* ;
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
  * statement -> exprStmt
  *   | forStmt
@@ -34,8 +39,12 @@ import static com.github.gdoenlen.lox.TokenType.*;
  *   | logical_or ;
  * logic_or -> logic_and ( "or" logic_and )* ;
  * logic_and -> equality ( "and" equality )* ;
+ * call -> primary ( "(" arguments? ")" )* ;
+ * arguments -> expression ( "," expression )* ;
  */
 class Parser {
+    private static final int MAXIMUM_NUMBER_OF_ARGUMENTS = 255;
+
     private final List<Token> tokens;
     private int current = 0;
 
@@ -133,7 +142,38 @@ class Parser {
             return new Unary(this.previous(), this.unary());
         }
 
-        return this.primary();
+        return this.call();
+    }
+
+    private Expr call() {
+        Expr expr = this.primary();
+        while (true) {
+            if (this.match(LEFT_PAREN)) {
+                expr = this.parseArguments(expr);
+            } else {
+                break;
+            }
+        }
+
+        return expr;
+    }
+
+    private Expr parseArguments(Expr callee) {
+        var arguments = new ArrayList<Expr>();
+        if (!this.check(RIGHT_PAREN)) {
+            do {
+                if (arguments.size() >= MAXIMUM_NUMBER_OF_ARGUMENTS) {
+                    // The JLS specifies that a function can have no more than 255 arguments
+                    // and this applies to us too since we are implementing in Java.
+                    throw error(peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.add(this.expression());
+            } while (this.match(COMMA));
+        }
+
+        Token callSite = this.consume(RIGHT_PAREN, "Expect ')' after arguments.");
+
+        return new Call(callee, arguments, callSite);
     }
 
     private Expr primary() {
@@ -255,11 +295,31 @@ class Parser {
     }
 
     private Statement declaration() {
-        if (this.match(VAR)) {
+        if (this.match(FUN))
+            return this.staticFunction();
+        if (this.match(VAR))
             return this.variableDeclaration();
-        }
 
         return this.statement();
+    }
+
+    private StaticFunc staticFunction() {
+        Token name = this.consume(IDENTIFIER, "Expected function name.");
+        this.consume(LEFT_PAREN, "Expected '(' after function name.");
+        var parameters = new ArrayList<Token>();
+        if (!this.check(RIGHT_PAREN)) {
+            do {
+                parameters.add(this.consume(IDENTIFIER, "Expected parameter name."));
+            } while (this.match(COMMA));
+        }
+
+        if (parameters.size() >= MAXIMUM_NUMBER_OF_ARGUMENTS) {
+            throw error(peek(), "Can't have more than 255 arguments.");
+        }
+        this.consume(RIGHT_PAREN, "Expected ')' after paremeters.");
+        this.consume(LEFT_BRACE, "Expect '{' before function body.");
+
+        return new StaticFunc(name, parameters, this.block());
     }
 
     private Statement variableDeclaration() {
@@ -357,7 +417,7 @@ class Parser {
         return new While(condition, body);
     }
 
-    private Statement block() {
+    private Block block() {
         var statements = new ArrayList<Statement>();
 
         while (!this.check(RIGHT_BRACE) && this.hasNext()) {
